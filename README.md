@@ -34,8 +34,30 @@ Open http://localhost:8000/docs to upload a PDF and ask questions.
 | `POST` | `/documents` | multipart `file` (PDF) |
 | `POST` | `/ask` | `{"question": "...", "k": 5}` |
 
+## Evaluate retrieval
+
+Add questions with the page that holds the answer to `eval/questions.json`:
+
+```json
+[{"question": "What is the refund window?", "filename": "policy.pdf", "page": 3}]
+```
+
+```bash
+python -m eval.run_eval --k 5      # prints hit rate@k and MRR
+```
+
 ## Design choices
 
-- _TODO: chunk size / overlap and why_
-- _TODO: why pgvector_
-- _TODO: how hallucination is reduced_
+- **Token-based chunks, 500 tokens with 50 overlap.** Models count tokens, so token chunks are predictable. Overlap keeps a sentence that crosses a boundary whole in at least one chunk. Smaller chunks retrieve more precisely but lose context; larger ones keep context but add noise and cost.
+- **Chunks keep their page number**, so every answer can cite `[file p.N]`.
+- **pgvector instead of a hosted vector DB.** Embeddings live next to the relational data in one Postgres, with joins, transactions and no extra service. An HNSW index keeps cosine search fast as the table grows.
+- **Grounded prompt + `temperature=0`** to reduce hallucination: the model must answer only from the retrieved context, cite sources, and say "I don't know" otherwise.
+- **Batched embeddings** (100 texts per request) to cut round trips during ingestion.
+- **No LangChain**, so every step of the pipeline is explicit and easy to change.
+- **Schema as an init script** (`db/schema.sql`) since it is two tables; a growing schema would move to Alembic migrations.
+
+## Next steps
+
+- Hybrid search (Postgres full-text + vector) and a cross-encoder re-ranker
+- Streaming answers over SSE
+- OCR for scanned PDFs (pages without a text layer are skipped today)
