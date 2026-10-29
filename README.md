@@ -11,14 +11,23 @@ Upload:  PDF -> pages (pypdf) -> token chunks w/ overlap (tiktoken) -> embedding
 Ask:     question -> embedding -> top-k cosine search (HNSW) -> grounded prompt -> answer + citations
 ```
 
+## Layout
+
+```
+api/         FastAPI backend: app/ (ingest, rag, routes), eval/, db/schema.sql
+web/         React + Vite + TypeScript UI
+streamlit/   Streamlit UI
+```
+
 ## Stack
 
-FastAPI · PostgreSQL + pgvector · OpenAI (embeddings + chat) · pypdf · tiktoken · Docker Compose
+FastAPI · PostgreSQL + pgvector · OpenAI (embeddings + chat) · pypdf · tiktoken · Docker Compose · Streamlit · React + Vite (TypeScript)
 
 ## Run locally
 
 ```bash
 docker compose up -d                 # Postgres + pgvector on :5433
+cd api
 python3.13 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env                 # add your OPENAI_API_KEY
@@ -27,23 +36,37 @@ uvicorn app.main:app --reload
 
 Open http://localhost:8000/docs to upload a PDF and ask questions.
 
+## Frontends
+
+Two UIs over the same API (start the API first):
+
+```bash
+# Streamlit — quick Python UI
+cd streamlit && python3.13 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt && streamlit run app.py   # http://localhost:8501
+
+# React + Vite — /api is proxied to FastAPI on :8000
+cd web && pnpm install && pnpm dev                         # http://localhost:5173
+```
+
 ## API
 
 | Method | Path | Body |
 |---|---|---|
+| `GET` | `/documents` | — (lists documents with chunk counts) |
 | `POST` | `/documents` | multipart `file` (PDF) |
 | `POST` | `/ask` | `{"question": "...", "k": 5}` |
 
 ## Evaluate retrieval
 
-Add questions with the page that holds the answer to `eval/questions.json`:
+Add questions with the page that holds the answer to `api/eval/questions.json`:
 
 ```json
 [{"question": "What is the refund window?", "filename": "policy.pdf", "page": 3}]
 ```
 
 ```bash
-python -m eval.run_eval --k 5      # prints hit rate@k and MRR
+cd api && python -m eval.run_eval --k 5      # prints hit rate@k and MRR
 ```
 
 ## Design choices
@@ -54,7 +77,7 @@ python -m eval.run_eval --k 5      # prints hit rate@k and MRR
 - **Grounded prompt + `temperature=0`** to reduce hallucination: the model must answer only from the retrieved context, cite sources, and say "I don't know" otherwise.
 - **Batched embeddings** (100 texts per request) to cut round trips during ingestion.
 - **No LangChain**, so every step of the pipeline is explicit and easy to change.
-- **Schema as an init script** (`db/schema.sql`) since it is two tables; a growing schema would move to Alembic migrations.
+- **Schema as an init script** (`api/db/schema.sql`) since it is two tables; a growing schema would move to Alembic migrations.
 
 ## Next steps
 

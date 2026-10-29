@@ -1,9 +1,9 @@
 """Retrieval evaluation: for each question, is the page that holds the answer in the top-k?
 
-eval/questions.json holds entries like:
+api/eval/questions.json holds entries like:
     {"question": "What is the refund window?", "filename": "policy.pdf", "page": 3}
 
-Run: python -m eval.run_eval --k 5
+Run (from api/): python -m eval.run_eval --k 5
 """
 
 import argparse
