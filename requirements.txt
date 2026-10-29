@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-multipart
+psycopg[binary]
+pgvector
+openai
+pypdf
+tiktoken
+pydantic-settings
