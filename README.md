@@ -16,12 +16,11 @@ Ask:     question -> embedding -> top-k cosine search (HNSW) -> grounded prompt 
 ```
 api/         FastAPI backend: app/ (ingest, rag, routes), eval/, db/schema.sql
 web/         React + Vite + TypeScript UI
-streamlit/   Streamlit UI
 ```
 
 ## Stack
 
-FastAPI · PostgreSQL + pgvector · OpenAI (embeddings + chat) · pypdf · tiktoken · Docker Compose · Streamlit · React + Vite (TypeScript)
+FastAPI · PostgreSQL + pgvector · OpenAI (embeddings + chat) · pypdf · tiktoken · Docker Compose · React + Vite (TypeScript)
 
 ## Run locally
 
@@ -36,17 +35,12 @@ uvicorn app.main:app --reload
 
 Open http://localhost:8000/docs to upload a PDF and ask questions.
 
-## Frontends
+## Frontend
 
-Two UIs over the same API (start the API first):
+React + Vite UI (start the API first; `/api` is proxied to FastAPI on :8000):
 
 ```bash
-# Streamlit — quick Python UI
-cd streamlit && python3.13 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt && streamlit run app.py   # http://localhost:8501
-
-# React + Vite — /api is proxied to FastAPI on :8000
-cd web && pnpm install && pnpm dev                         # http://localhost:5173
+cd web && pnpm install && pnpm dev   # http://localhost:5173
 ```
 
 ## API
