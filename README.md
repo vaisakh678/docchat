@@ -4,6 +4,10 @@ Chat with your PDFs. Answers are grounded in the uploaded documents and cite the
 
 Built from scratch in Python (no LangChain) to keep every step of the RAG pipeline explicit.
 
+![DocChat answering a question with page citations, and saying "I don't know" when the answer isn't in the documents](docs/demo.jpg)
+
+The first answer cites the page it came from; the second question isn't covered by any document, so it says "I don't know" instead of guessing. ([Animated demo](docs/demo.gif))
+
 ## How it works
 
 ```
